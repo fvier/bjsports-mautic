@@ -31,11 +31,11 @@ services:
       - mautic_net
 
   mautic_web:
-    image: mautic/mautic:v5-apache
+    image: mautic/mautic:5-apache
     container_name: mautic_web
     restart: always
     ports:
-      - "8080:80"
+      - "8085:80"
     environment:
       MAUTIC_DB_HOST: mautic_db
       MAUTIC_DB_USER: ${MYSQL_USER:-mauticuser}
