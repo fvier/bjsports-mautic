@@ -1,0 +1,7 @@
+# Exemplo de variáveis locais para o laboratório Terraform
+postgres_db_name  = "bjsports_lab_db"
+postgres_user     = "bjsports_admin"
+postgres_password = "bjsports_lab_secret_2026"
+postgres_port     = 5434
+redis_port        = 6379
+adminer_port      = 8090
