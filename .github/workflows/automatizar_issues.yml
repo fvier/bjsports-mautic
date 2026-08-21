@@ -1,0 +1,60 @@
+name: Automação Idempotente de Issues
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar e Autenticar no GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth status
+
+      - name: Executar Automação de Issues Idempotente
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          create_issue_if_not_exists() {
+            local title="$1"
+            local body="$2"
+            local labels="$3"
+
+            echo "Verificando se a issue já existe: '$title'..."
+            existing=$(gh issue list --search "\"$title\" in:title" --json number --jq '.[0].number')
+
+            if [ -n "$existing" ]; then
+              echo "Issue #$existing já existe com o título: '$title'. Ignorando criação."
+            else
+              echo "Criando nova issue: '$title'..."
+              gh issue create --title "$title" --body "$body" --label "$labels"
+            fi
+          }
+
+          # Tarefas de governança e infraestrutura do BJ Sports Mautic
+          create_issue_if_not_exists \
+            "[DOCS] Atualizar documentação de governança e guias do Mautic" \
+            "Revisar os arquivos em \`docs/\` garantindo conformidade com [diretrizes_documentacao.md](docs/diretrizes_documentacao.md).\n\n### Critérios de Aceite\n- [ ] Todos os arquivos em \`docs/\` validados\n- [ ] Fluxos de automação de marketing documentados" \
+            "documentation"
+
+          create_issue_if_not_exists \
+            "[INFRA] Configurar cronjobs e backup idempotente do Mautic" \
+            "Garantir execução periódica do script de backup do banco de dados e upload offsite via Rclone.\n\n### Critérios de Aceite\n- [ ] Script de backup \`infra/backup_mautic.sh\` testado\n- [ ] Sanitização do \`.env\` confirmada" \
+            "enhancement"
+
+          create_issue_if_not_exists \
+            "[FEAT] Integrar Mautic API v5 para segmentação automática de clientes BJ Sports" \
+            "Configurar webhooks e sincronização de contatos com CRM / WhatsApp.\n\n### Critérios de Aceite\n- [ ] Script \`api/mautic_api_client.py\` testado com credenciais de homologação\n- [ ] Webhook de disparos validado" \
+            "enhancement"

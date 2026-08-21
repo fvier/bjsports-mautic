@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mautic_db:
+    image: mariadb:10.11
+    container_name: mautic_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mautic}
+      MYSQL_USER: ${MYSQL_USER:-mauticuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mauticpass}
+    volumes:
+      - mautic_db_data:/var/lib/mysql
+    networks:
+      - mautic_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mautic_redis:
+    image: redis:7-alpine
+    container_name: mautic_redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - mautic_redis_data:/data
+    networks:
+      - mautic_net
+
+  mautic_web:
+    image: mautic/mautic:v5-apache
+    container_name: mautic_web
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      MAUTIC_DB_HOST: mautic_db
+      MAUTIC_DB_USER: ${MYSQL_USER:-mauticuser}
+      MAUTIC_DB_PASSWORD: ${MYSQL_PASSWORD:-mauticpass}
+      MAUTIC_DB_NAME: ${MYSQL_DATABASE:-mautic}
+      MAUTIC_RUN_CRON_JOBS: "true"
+      MAUTIC_URL: ${MAUTIC_URL:-http://localhost:8080}
+    volumes:
+      - mautic_data:/var/www/html
+    depends_on:
+      mautic_db:
+        condition: service_healthy
+      mautic_redis:
+        condition: service_started
+    networks:
+      - mautic_net
+
+networks:
+  mautic_net:
+    driver: bridge
+
+volumes:
+  mautic_db_data:
+  mautic_redis_data:
+  mautic_data:
