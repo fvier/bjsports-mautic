@@ -52,10 +52,25 @@ services:
         condition: service_started
     networks:
       - mautic_net
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.mautic-http.entrypoints=http"
+      - "traefik.http.routers.mautic-http.rule=Host(`mkt.fernandovier.com`)"
+      - "traefik.http.routers.mautic-http.middlewares=mautic-redirect"
+      - "traefik.http.middlewares.mautic-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.mautic-secure.entrypoints=https"
+      - "traefik.http.routers.mautic-secure.rule=Host(`mkt.fernandovier.com`)"
+      - "traefik.http.routers.mautic-secure.tls=true"
+      - "traefik.http.routers.mautic-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mautic-secure.loadbalancer.server.port=80"
 
 networks:
   mautic_net:
     driver: bridge
+  coolify:
+    external: true
 
 volumes:
   mautic_db_data:
